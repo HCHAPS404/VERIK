@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  --color-gov-primary: #0b3d91;
+  --color-gov-secondary: #c8102e;
+  --color-gov-surface: #ffffff;
+  --color-gov-foreground: #1f2933;
+  --color-gov-muted: #f4f6fa;
+  --color-gov-border: #d8dfea;
+  --color-success: #1b7f3a;
+  --color-warning: #b35c00;
+  --color-danger: #b00020;
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-gov-muted);
+  color: var(--color-gov-foreground);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-gov-secondary);
+  outline-offset: 2px;
+}
