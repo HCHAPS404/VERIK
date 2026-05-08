@@ -15,15 +15,15 @@ import type { VerifyResult } from "@/modules/verify/types";
 export function VerifyPanel() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [topK, setTopK] = useState(5);
-  const [streamMode, setStreamMode] = useState(true);
-  const { loading, progress, error, model, events, setLoading, setError, setModel, pushEvent, setProgress, reset } =
+  const [streamMode, setStreamMode] = useState(false);
+  const { loading, progress, error, model, events, setLoading, setError, setModel, pushEvent, setProgress } =
     useVerifyStore();
 
   const runVerification = async () => {
     if (!selectedFile) return;
-    reset();
     setLoading(true);
     setError(null);
+    setProgress(0);
 
     try {
       if (!streamMode) {
@@ -74,9 +74,14 @@ export function VerifyPanel() {
               results: accumulatedResults
             });
           }
+          if (event.event === "error") {
+            const payload = event.data as { message: string };
+            throw new Error(payload.message ?? "Error del servidor durante la verificación.");
+          }
         }
       }
     } catch (err) {
+      console.error("Error en verificación:", err);
       const msg =
         err instanceof ApiError
           ? err.message
@@ -94,13 +99,18 @@ export function VerifyPanel() {
       <Card title="Verificación documental">
         <div className="space-y-3">
           <p className="text-sm text-slate-600">Formatos admitidos: PDF o CSV (un archivo).</p>
-          <input
-            type="file"
-            accept=".pdf,.csv,application/pdf,text/csv"
-            aria-label="Seleccionar PDF o CSV para verificar"
-            onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-            className="block w-full rounded-md border border-gov-border bg-white p-2 text-sm"
-          />
+          <div>
+            <input
+              type="file"
+              accept=".pdf,.csv,application/pdf,text/csv"
+              aria-label="Seleccionar PDF o CSV para verificar"
+              onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+              className="block w-full rounded-md border border-gov-border bg-white p-2 text-sm"
+            />
+            {selectedFile ? (
+              <p className="mt-1 text-xs text-green-700">Archivo seleccionado: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</p>
+            ) : null}
+          </div>
           <label className="block text-sm">
             top_k:
             <input
@@ -125,7 +135,7 @@ export function VerifyPanel() {
             {loading ? "Verificando..." : "Verificar"}
           </Button>
           <Progress value={progress} />
-          {error ? <p className="text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="text-sm text-red-700" role="alert">{error}</p> : null}
         </div>
       </Card>
 

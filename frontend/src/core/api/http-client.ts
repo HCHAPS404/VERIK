@@ -2,7 +2,6 @@ import { ApiError } from "@/core/api/errors";
 
 export type RequestOptions = {
   retries?: number;
-  /** Timeout en ms para esta peticion (ingesta/verificacion pueden tardar mucho). */
   timeoutMs?: number;
 };
 
