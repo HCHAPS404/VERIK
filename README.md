@@ -1,2 +1,2 @@
 # VERIK
-Repositorio Proyecto Hackaton 5.0
+Repositorio Proyecto Hackaton Colombia 5.0
