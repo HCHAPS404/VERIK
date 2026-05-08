@@ -1,9 +1,10 @@
-"""Extraccion de texto desde PDF y division en chunks."""
+"""Extraccion de texto desde PDF o CSV y division en chunks."""
 
 from __future__ import annotations
 
+import csv
 import logging
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Any
 
 import fitz
@@ -34,6 +35,52 @@ def extract_text_from_pdf(file_bytes: bytes) -> list[dict[str, Any]]:
 
     logger.info("Se extrajeron %s paginas con texto.", len(pages))
     return pages
+
+
+def extract_text_from_csv(file_bytes: bytes) -> list[dict[str, Any]]:
+    """Convierte un CSV en texto plano y lo devuelve como una pseudo-pagina.
+
+    Usa DictReader para conservar nombres de columna en cada fila.
+    """
+    decoded: str | None = None
+    for encoding in ("utf-8-sig", "utf-8", "latin-1"):
+        try:
+            decoded = file_bytes.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    if decoded is None:
+        raise ValueError("No fue posible decodificar el CSV (encoding no soportado).")
+
+    reader = csv.DictReader(StringIO(decoded))
+    lines: list[str] = []
+    if reader.fieldnames:
+        lines.append(" | ".join(reader.fieldnames))
+    for row in reader:
+        parts = [
+            f"{key}: {value}"
+            for key, value in row.items()
+            if value is not None and str(value).strip()
+        ]
+        if parts:
+            lines.append(" | ".join(parts))
+
+    full = "\n".join(lines).strip()
+    if not full:
+        return []
+
+    logger.info("CSV convertido a texto (%s lineas logicas).", len(lines))
+    return [{"page_number": 1, "text": full}]
+
+
+def extract_document_pages(filename: str, file_bytes: bytes) -> list[dict[str, Any]]:
+    """Enruta la extraccion segun extension (.pdf o .csv)."""
+    lower = filename.lower()
+    if lower.endswith(".pdf"):
+        return extract_text_from_pdf(file_bytes)
+    if lower.endswith(".csv"):
+        return extract_text_from_csv(file_bytes)
+    raise ValueError(f"Extension no soportada para {filename}. Use PDF o CSV.")
 
 
 def split_text_into_chunks(text: str) -> list[str]:

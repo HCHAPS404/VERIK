@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ApiError } from "@/core/api/errors";
 import { Button } from "@/shared/components/ui/Button";
 import { Card } from "@/shared/components/ui/Card";
 import { Progress } from "@/shared/components/ui/Progress";
@@ -76,7 +77,13 @@ export function VerifyPanel() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error verificando documento.");
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Error verificando documento.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -86,10 +93,11 @@ export function VerifyPanel() {
     <div className="space-y-6">
       <Card title="Verificación documental">
         <div className="space-y-3">
+          <p className="text-sm text-slate-600">Formatos admitidos: PDF o CSV (un archivo).</p>
           <input
             type="file"
-            accept="application/pdf"
-            aria-label="Seleccionar PDF para verificar"
+            accept=".pdf,.csv,application/pdf,text/csv"
+            aria-label="Seleccionar PDF o CSV para verificar"
             onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
             className="block w-full rounded-md border border-gov-border bg-white p-2 text-sm"
           />

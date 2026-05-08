@@ -8,33 +8,42 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 import database
 from embeddings import embed_texts
-from preprocessing import extract_text_from_pdf, split_text_into_chunks
+from preprocessing import extract_document_pages, split_text_into_chunks
 from schemas import IndexedFile, IngestResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["ingest"])
 
+_ALLOWED_SUFFIXES = (".pdf", ".csv")
+
+
+def _is_allowed_document(filename: str | None) -> bool:
+    if not filename:
+        return False
+    lower = filename.lower()
+    return any(lower.endswith(s) for s in _ALLOWED_SUFFIXES)
+
 
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_documents(files: list[UploadFile] = File(...)) -> IngestResponse:
-    """Ingiere uno o varios PDFs y los indexa en ChromaDB."""
+    """Ingiere uno o varios PDF o CSV y los indexa en ChromaDB."""
     if not files:
-        raise HTTPException(status_code=400, detail="Debes subir al menos un archivo PDF.")
+        raise HTTPException(status_code=400, detail="Debes subir al menos un archivo (PDF o CSV).")
 
     indexed_files: list[IndexedFile] = []
     total_chunks = 0
 
     for upload in files:
-        if not upload.filename.lower().endswith(".pdf"):
+        if not _is_allowed_document(upload.filename):
             raise HTTPException(
                 status_code=400,
-                detail=f"Archivo no valido: {upload.filename}. Solo se aceptan PDFs.",
+                detail=f"Archivo no valido: {upload.filename}. Solo se aceptan PDF o CSV.",
             )
 
         try:
             file_bytes = await upload.read()
-            pages = extract_text_from_pdf(file_bytes)
+            pages = extract_document_pages(upload.filename or "documento", file_bytes)
             file_chunks: list[str] = []
             file_metadatas: list[dict[str, object]] = []
 

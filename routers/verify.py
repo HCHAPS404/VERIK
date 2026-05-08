@@ -12,12 +12,21 @@ from fastapi.responses import StreamingResponse
 import database
 from embeddings import embed_texts
 from llm import verificar_fragmento
-from preprocessing import extract_text_from_pdf, split_text_into_chunks
+from preprocessing import extract_document_pages, split_text_into_chunks
 from schemas import VerifyResponse, VerifyResult, VerifySummary
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["verify"])
+
+_ALLOWED_SUFFIXES = (".pdf", ".csv")
+
+
+def _is_allowed_document(filename: str | None) -> bool:
+    if not filename:
+        return False
+    lower = filename.lower()
+    return any(lower.endswith(s) for s in _ALLOWED_SUFFIXES)
 
 
 def _build_verify_summary(results: list[VerifyResult]) -> VerifySummary:
@@ -58,15 +67,15 @@ def _format_retrieved(query_result: dict[str, Any]) -> tuple[list[str], list[dic
 
 
 async def _extract_chunks_from_upload(upload: UploadFile) -> list[str]:
-    if not upload.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Solo se permite un archivo PDF.")
+    if not _is_allowed_document(upload.filename):
+        raise HTTPException(status_code=400, detail="Solo se permite un archivo PDF o CSV.")
     file_bytes = await upload.read()
-    pages = extract_text_from_pdf(file_bytes)
+    pages = extract_document_pages(upload.filename or "documento", file_bytes)
     chunks: list[str] = []
     for page in pages:
         chunks.extend(split_text_into_chunks(str(page["text"])))
     if not chunks:
-        raise HTTPException(status_code=400, detail="No se pudo extraer texto del PDF enviado.")
+        raise HTTPException(status_code=400, detail="No se pudo extraer texto del documento enviado.")
     return chunks
 
 
@@ -75,7 +84,7 @@ async def verify_document(
     file: UploadFile = File(...),
     top_k: int = Query(default=5, ge=1, le=20),
 ) -> VerifyResponse:
-    """Verifica todos los chunks del PDF y retorna respuesta JSON final."""
+    """Verifica todos los chunks del documento (PDF o CSV) y retorna respuesta JSON final."""
     try:
         chunks = await _extract_chunks_from_upload(file)
         chunk_embeddings = embed_texts(chunks, input_type="search_query")
