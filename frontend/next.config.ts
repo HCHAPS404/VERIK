@@ -1,11 +1,19 @@
 import type { NextConfig } from "next";
 
+const backendBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8001";
+let backendOrigin = "http://127.0.0.1:8001";
+try {
+  backendOrigin = new URL(backendBaseUrl).origin;
+} catch {
+  backendOrigin = "http://127.0.0.1:8001";
+}
+
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
         source: "/api/backend/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8001"}/:path*`
+        destination: `${backendBaseUrl}/:path*`
       }
     ];
   },
@@ -20,7 +28,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' http://127.0.0.1:8001"
+              `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ${backendOrigin}`
           }
         ]
       }

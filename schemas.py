@@ -49,3 +49,26 @@ class VerifyResponse(BaseModel):
 
     summary: VerifySummary
     results: list[VerifyResult]
+
+
+class NumericStats(BaseModel):
+    """Metricas agregadas de una columna numerica."""
+
+    min: str | None = None
+    max: str | None = None
+    mean: str | None = None
+    median: str | None = None
+
+
+class SecopSummaryResponse(BaseModel):
+    """Resumen agregado para datasets de SECOP."""
+
+    dataset: str
+    total_records: int
+    total_columns: int
+    null_counts: dict[str, int]
+    int_columns: list[str]
+    str_columns: list[str]
+    date_range: dict[str, str | None]
+    numeric_stats: dict[str, NumericStats]
+    lookup_sample: dict[str, Any] | None = None

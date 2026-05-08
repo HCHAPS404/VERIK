@@ -7,6 +7,7 @@ import { featureFlags } from "@/core/config/feature-flags";
 
 const items = [
   { href: "/", label: "Dashboard", flag: true },
+  { href: "/secop", label: "SECOP", flag: true },
   { href: "/ingest", label: "Ingesta", flag: featureFlags.ingest },
   { href: "/verify", label: "Verificar", flag: featureFlags.verify }
 ];

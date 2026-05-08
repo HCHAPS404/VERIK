@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 import database
 from routers.ingest import router as ingest_router
+from routers.secop import router as secop_router
 from routers.verify import router as verify_router
 
 logging.basicConfig(level=logging.INFO)
@@ -35,3 +36,4 @@ def health() -> dict[str, str]:
 
 app.include_router(ingest_router)
 app.include_router(verify_router)
+app.include_router(secop_router)
