@@ -41,3 +41,24 @@ def query_similar(embedding: list[float], n_results: int = 5) -> dict[str, Any]:
     """Devuelve documentos similares junto con metadatos y distancias."""
     collection = get_or_create_collection()
     return collection.query(query_embeddings=[embedding], n_results=n_results)
+
+
+def get_collection_stats() -> dict[str, Any]:
+    """Devuelve estadisticas de la coleccion: total chunks y archivos unicos."""
+    collection = get_or_create_collection()
+    total = collection.count()
+    if total == 0:
+        return {"total_chunks": 0, "total_files": 0, "files": []}
+
+    result = collection.get(include=["metadatas"])
+    filenames: list[str] = []
+    for md in (result.get("metadatas") or []):
+        name = md.get("filename") if isinstance(md, dict) else None
+        if name and name not in filenames:
+            filenames.append(name)
+
+    return {
+        "total_chunks": total,
+        "total_files": len(filenames),
+        "files": filenames,
+    }

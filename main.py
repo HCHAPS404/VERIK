@@ -11,6 +11,7 @@ import database
 from routers.ingest import router as ingest_router
 from routers.secop import router as secop_router
 from routers.verify import router as verify_router
+from schemas import CollectionStats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,6 +42,13 @@ def on_startup() -> None:
 def health() -> dict[str, str]:
     """Endpoint basico de salud del servicio."""
     return {"status": "ok"}
+
+
+@app.get("/stats", response_model=CollectionStats)
+def stats() -> CollectionStats:
+    """Estadisticas de la coleccion vectorial."""
+    data = database.get_collection_stats()
+    return CollectionStats(**data)
 
 
 app.include_router(ingest_router)

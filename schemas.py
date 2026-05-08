@@ -72,3 +72,11 @@ class SecopSummaryResponse(BaseModel):
     date_range: dict[str, str | None]
     numeric_stats: dict[str, NumericStats]
     lookup_sample: dict[str, Any] | None = None
+
+
+class CollectionStats(BaseModel):
+    """Estadisticas de la coleccion ChromaDB."""
+
+    total_chunks: int
+    total_files: int
+    files: list[str]
