@@ -195,11 +195,11 @@ def secop_summary(dataset: DatasetId = Query(..., description="Dataset SECOP: jb
     return _build_summary(dataset)
 
 
-@router.get("/export")
+@router.get("/export", response_model=None)
 def secop_export(
     dataset: DatasetId = Query(..., description="Dataset SECOP: jbjy-vk9h o dmgg-8hin"),
     format: ExportFormat = Query("json", description="Formato de exportacion: json o csv"),
-) -> JSONResponse | PlainTextResponse:
+):
     """Exporta el resumen SECOP en formato JSON o CSV."""
     summary = _build_summary(dataset)
     if format == "json":

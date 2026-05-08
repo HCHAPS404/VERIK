@@ -144,6 +144,7 @@ async def verify_document_stream(
                     "verdict",
                     {
                         "chunk_index": index,
+                        "chunk_text": chunk,
                         "verdict": result.verdict,
                         "justification": result.justification,
                         "sources": result.sources,

@@ -9,6 +9,7 @@ import { VerifyResultsTable } from "@/modules/verify/components/VerifyResultsTab
 import { VerdictDonut } from "@/modules/verify/components/VerdictDonut";
 import { verifyPdf, verifyPdfStream } from "@/modules/verify/services/verify.service";
 import { useVerifyStore } from "@/modules/verify/store";
+import type { VerifyResult } from "@/modules/verify/types";
 
 export function VerifyPanel() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -29,8 +30,26 @@ export function VerifyPanel() {
         setModel(data);
         setProgress(100);
       } else {
+        const accumulatedResults: VerifyResult[] = [];
         for await (const event of verifyPdfStream(selectedFile, topK)) {
           pushEvent(event);
+          if (event.event === "verdict") {
+            const payload = event.data as {
+              chunk_index: number;
+              chunk_text: string;
+              verdict: "SOPORTADA" | "CONTRADICHA" | "NO MENCIONADA";
+              justification: string;
+              sources: string[];
+            };
+            accumulatedResults.push({
+              chunkIndex: payload.chunk_index,
+              chunkText: payload.chunk_text,
+              verdict: payload.verdict,
+              justification: payload.justification,
+              sources: payload.sources,
+              retrieved: []
+            });
+          }
           if (event.event === "progress") {
             const payload = event.data as { done: number; total: number };
             setProgress(Math.round((payload.done / payload.total) * 100));
@@ -51,7 +70,7 @@ export function VerifyPanel() {
                 notMentioned: payload.not_mentioned,
                 supportScore: payload.support_score
               },
-              results: []
+              results: accumulatedResults
             });
           }
         }
